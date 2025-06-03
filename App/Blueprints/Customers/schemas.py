@@ -1,5 +1,6 @@
 from App.extensions import ma
 from App.models import Customer
+
 class CustomerSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Customer

@@ -1,6 +1,7 @@
 
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, db
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from App.extensions import db
 
 # Define the Base class
 class Base(DeclarativeBase):

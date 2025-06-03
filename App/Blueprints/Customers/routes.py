@@ -2,14 +2,14 @@ from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 from App.models import Customer, db
-from .schemas import CustomerSchema, CustomersSchema
+from .schemas import customer_schema, customers_schema
 
 # Blueprint setup
 customer_bp = Blueprint('customer_bp', __name__)
 
 # Schema instances
-customer_schema = CustomerSchema()
-customers_schema = CustomersSchema()
+# customer_schema = CustomerSchema()
+# customers_schema = CustomersSchema(many=True)
 
 # Create customer
 @customer_bp.route('/customers', methods=['POST'])

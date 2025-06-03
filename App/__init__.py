@@ -1,6 +1,6 @@
 from flask import Flask
-from .extensions import ma
-from .models import db, Customer
+from .extensions import ma, db
+# from .models import db, Customer
 from .Blueprints.Customers import customers_bp
 
 def create_app(config_name):
@@ -8,6 +8,7 @@ def create_app(config_name):
     app.config.from_object(f'config.{config_name}')
 
     # initialize extensions
+    db.init_app(app)
     ma.init_app(app)
     
     # register blueprints
