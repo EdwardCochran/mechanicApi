@@ -3,16 +3,17 @@ from marshmallow import ValidationError
 from sqlalchemy import select
 from App.models import Customer, db
 from .schemas import customer_schema, customers_schema
+from . import customers_bp
 
 # Blueprint setup
-customer_bp = Blueprint('customer_bp', __name__)
+# customers_bp = Blueprint('customer_bp', __name__)
 
 # Schema instances
 # customer_schema = CustomerSchema()
 # customers_schema = CustomersSchema(many=True)
 
 # Create customer
-@customer_bp.route('/customers', methods=['POST'])
+@customers_bp.route('', methods=['POST'])
 def create_customer():
     try:
         customer_data = customer_schema.load(request.json)
@@ -40,13 +41,14 @@ def create_customer():
     return customer_schema.jsonify(new_customer), 201
 
 # Get all customers
-@customer_bp.route('/customers', methods=['GET'])
+@customers_bp.route('', methods=['GET'])
 def get_customers():
+
     customers = db.session.execute(select(Customer)).scalars().all()
     return customers_schema.jsonify(customers), 200
 
 # Get customer by ID
-@customer_bp.route('/customer/<int:customer_id>', methods=['GET'])
+@customers_bp.route('/<int:customer_id>', methods=['GET'])
 def get_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:
@@ -54,7 +56,7 @@ def get_customer(customer_id):
     return customer_schema.jsonify(customer), 200
 
 # Update customer
-@customer_bp.route('/customer/<int:customer_id>', methods=['PUT'])
+@customers_bp.route('/<int:customer_id>', methods=['PUT'])
 def update_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:
@@ -72,7 +74,7 @@ def update_customer(customer_id):
     return customer_schema.jsonify(customer), 200
 
 # Delete customer
-@customer_bp.route('/customer/<int:customer_id>', methods=['DELETE'])
+@customers_bp.route('/<int:customer_id>', methods=['DELETE'])
 def delete_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:

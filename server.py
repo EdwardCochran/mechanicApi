@@ -6,7 +6,14 @@ app = create_app('DevelopmentConfig')
 with app.app_context():
     db.create_all()
     
-app.run()
+with app.app_context():
+    if __name__ == '__main__':
+        print("Registered routes:") #added lines 6-8 to print registered routes
+        for rule in app.url_map.iter_rules():
+            print(f"{rule.rule} -> {rule.endpoint}")
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 # Marshmallow Schemas
 
