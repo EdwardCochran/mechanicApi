@@ -1,4 +1,4 @@
-from App import create_app # "App" is the folder that contains your __init__.py file
+from App import create_app 
 from App.models import db
 
 app = create_app('DevelopmentConfig')
