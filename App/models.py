@@ -35,7 +35,7 @@ class Customer(Base):
 class ServiceTicket(Base):
     __tablename__ = 'service_tickets'
     id: Mapped[int] = mapped_column(primary_key=True)
-    VIN: Mapped[str] = mapped_column(db.String(17), nullable=False, unique=True)
+    vin: Mapped[str] = mapped_column(db.String(17), nullable=False,)
     service_date: Mapped[date] = mapped_column(db.Date)
     service_description: Mapped[str] = mapped_column(db.String(500), nullable=False)
     customer_id: Mapped[int] = mapped_column(db.ForeignKey('customers.id'), nullable=False)
