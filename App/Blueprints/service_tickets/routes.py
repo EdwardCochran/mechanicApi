@@ -30,3 +30,54 @@ def create_service_ticket():
     db.session.add(new_ticket)
     db.session.commit()
     return service_ticket_schema.jsonify(new_ticket), 201
+
+# Assign Mechanic to Ticket
+@service_ticket_bp.route('/<int:ticket_id>/assign-mechanic/<int:mechanic_id>', methods=['PUT'])
+def assign_mechanic(ticket_id, mechanic_id):
+    ticket = db.session.get(ServiceTicket, ticket_id)
+    mechanic = db.session.get(Mechanic, mechanic_id)
+    
+    if not ticket or not mechanic:
+        return jsonify({"error": "Ticket or Mechanic not found"}), 404
+
+    if mechanic in ticket.mechanics:
+        return jsonify({"message": "Mechanic already assigned"}), 200
+
+    ticket.mechanics.append(mechanic)
+    db.session.commit()
+    return service_ticket_schema.jsonify(ticket), 200
+
+
+# Remove Mechanic from Ticket
+@service_ticket_bp.route('/<int:ticket_id>/remove-mechanic/<int:mechanic_id>', methods=['PUT'])
+def remove_mechanic(ticket_id, mechanic_id):
+    ticket = db.session.get(ServiceTicket, ticket_id)
+    mechanic = db.session.get(Mechanic, mechanic_id)
+
+    if not ticket or not mechanic:
+        return jsonify({"error": "Ticket or Mechanic not found"}), 404
+
+    if mechanic not in ticket.mechanics:
+        return jsonify({"message": "Mechanic not assigned to this ticket"}), 200
+
+    ticket.mechanics.remove(mechanic)
+    db.session.commit()
+    return service_ticket_schema.jsonify(ticket), 200
+
+
+# Get All Service Tickets
+@service_ticket_bp.route('/', methods=['GET'])
+def get_service_tickets():
+    tickets = db.session.execute(select(ServiceTicket)).scalars().all()
+    return service_tickets_schema.jsonify(tickets), 200
+
+# Delete service ticket
+@service_ticket_bp.route('/<int:ticket_id>', methods=['DELETE'])
+def delete_service_ticket(ticket_id):
+    ticket = db.session.get(ServiceTicket, ticket_id)
+    if not ticket:
+        return jsonify({"error": "Service ticket not found"}), 404
+
+    db.session.delete(ticket)
+    db.session.commit()
+    return jsonify({"message": f"Service ticket id: {ticket_id} successfully deleted."}), 200
