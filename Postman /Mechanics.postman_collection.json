@@ -1,0 +1,182 @@
+{
+	"info": {
+		"_postman_id": "d8fc567f-eec6-4931-80d6-2512210dfd01",
+		"name": "Mechanics",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45106762",
+		"_collection_link": "https://edwardcochran-420655.postman.co/workspace/Mechanic_API~006511ff-d697-47aa-ae50-951a6d142312/collection/45106762-d8fc567f-eec6-4931-80d6-2512210dfd01?action=share&source=collection_link&creator=45106762"
+	},
+	"item": [
+		{
+			"name": "Create New mechanic",
+			"request": {
+				"auth": {
+					"type": "inherit"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\n  {\n    \"name\": \"Carol Lee\",\n    \"email\": \"carol.lee@example.com\",\n    \"phone\": \"5556781234\",\n    \"salary\": \"62000\"\n  }\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/mechanics",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"mechanics"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Mechanics",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "inherit"
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/mechanics",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"mechanics"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Individual mechanic",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/mechanics/2",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"mechanics",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Mechanic",
+			"request": {
+				"auth": {
+					"type": "inherit"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\n  \"salary\": 50000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/mechanics/1",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"mechanics",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Mechanic",
+			"request": {
+				"auth": {
+					"type": "inherit"
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/mechanics/1",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"mechanics",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

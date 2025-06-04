@@ -1,6 +1,6 @@
 from flask import Flask
 from .extensions import ma, db
-from .Blueprints.Customers import customers_bp
+from .Blueprints.customers import customers_bp
 from .Blueprints.mechanics import mechanic_bp
 from .Blueprints.service_tickets.routes import service_ticket_bp
 
