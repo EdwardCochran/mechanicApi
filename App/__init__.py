@@ -1,6 +1,5 @@
 from flask import Flask
 from .extensions import ma, db
-# from .models import db, Customer
 from .Blueprints.Customers import customers_bp
 from .Blueprints.mechanics import mechanic_bp
 

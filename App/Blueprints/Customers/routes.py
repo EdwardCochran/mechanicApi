@@ -5,14 +5,6 @@ from App.models import Customer, db
 from .schemas import customer_schema, customers_schema
 from . import customers_bp
 
-# Blueprint setup
-# customers_bp = Blueprint('customer_bp', __name__)
-
-# Schema instances
-# customer_schema = CustomerSchema()
-# customers_schema = CustomersSchema(many=True)
-
-# Create customer
 @customers_bp.route('', methods=['POST'])
 def create_customer():
     try:
