@@ -2,9 +2,38 @@ from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 from App.models import Customer, Mechanic, db
-from .schemas import mechanic_schema, mechanics_schema
+from .schemas import mechanic_schema, mechanics_schema, login_schema
+from App. extensions import cache
+from App.utils.util import encode_token
 
 mechanic_bp = Blueprint('mechanics_bp', __name__)  # Blueprint instance is named mechanic_bp
+
+@mechanic_bp.route("/login", methods=['POST'])
+def login_mechanic():
+    try:
+        credentials = login_schema.load(request.json)
+        email = credentials['email']
+        password = credentials['password']
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+
+    query = select(Mechanic).where(Mechanic.email == email, Mechanic.password == password)
+    mechanic = db.session.execute(query).scalars().first()
+
+    if mechanic:
+        token = encode_token(mechanic.id)
+        response = {
+            "status": "success",
+            "message": "Login successful",
+            "token": token,
+        }
+        return jsonify(response), 200
+    else:
+        return jsonify({"message": "Invalid email or password"}), 401
+
+
+
+
 
 # Create mechanic
 @mechanic_bp.route('', methods=['POST'])  
@@ -15,12 +44,13 @@ def create_mechanic():
         return jsonify(e.messages), 400
 
     existing_email = db.session.execute(
-        select(Mechanic).where(Mechanic.email == mechanic_data['email'])
+        select(Mechanic).where(Mechanic.email == mechanic_data.email)
     ).scalars().first()
+    
     if existing_email:
         return jsonify({"error": "Mechanic with this email already exists"}), 400
 
-    new_mechanic = Mechanic(**mechanic_data)
+    new_mechanic = Mechanic(**request.json)
     db.session.add(new_mechanic)
     db.session.commit()
 
@@ -35,6 +65,7 @@ def get_mechanics():
 
 # Get mechanic by ID
 @mechanic_bp.route('/<int:mechanic_id>', methods=['GET'])
+@cache.cached(timeout=60)  # Cache the response for 60 seconds
 def get_mechanic(mechanic_id):
     mechanic = db.session.get(Mechanic, mechanic_id)
     if not mechanic:
@@ -60,6 +91,7 @@ def update_mechanic(mechanic_id):
 
 # Delete mechanic
 @mechanic_bp.route('/<int:mechanic_id>', methods=['DELETE'])
+
 def delete_mechanic(mechanic_id):
     mechanic = db.session.get(Mechanic, mechanic_id)
     if not mechanic:

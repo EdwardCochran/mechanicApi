@@ -4,8 +4,11 @@ from sqlalchemy import select
 from App.models import Customer, db
 from .schemas import customer_schema, customers_schema
 from . import customers_bp
+from App.extensions import limiter, cache
 
+#Create Customer
 @customers_bp.route('', methods=['POST'])
+@limiter.limit("5 per day")  # Rate limit for this endpoint
 def create_customer():
     try:
         customer_data = customer_schema.load(request.json)
@@ -34,6 +37,7 @@ def create_customer():
 
 # Get all customers
 @customers_bp.route('', methods=['GET'])
+@cache.cached(timeout=60)  # Cache the response for 60 seconds
 def get_customers():
 
     customers = db.session.execute(select(Customer)).scalars().all()
@@ -49,6 +53,7 @@ def get_customer(customer_id):
 
 # Update customer
 @customers_bp.route('/<int:customer_id>', methods=['PUT'])
+@limiter.limit("4 per month")  # Rate limit for this endpoint
 def update_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:
@@ -67,6 +72,7 @@ def update_customer(customer_id):
 
 # Delete customer
 @customers_bp.route('/<int:customer_id>', methods=['DELETE'])
+@limiter.limit("3 per day")  # Rate limit for this endpoint
 def delete_customer(customer_id):
     customer = db.session.get(Customer, customer_id)
     if not customer:

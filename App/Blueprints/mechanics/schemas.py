@@ -10,5 +10,4 @@ class MechanicSchema(ma.SQLAlchemyAutoSchema):
 
 mechanic_schema = MechanicSchema()
 mechanics_schema = MechanicSchema(many=True)
-
- 
+login_schema= MechanicSchema(only=('email', 'password'))  # For login, only email and password are needed

@@ -3,6 +3,7 @@ from sqlalchemy import select
 from marshmallow import ValidationError
 from App.models import db, ServiceTicket, Mechanic
 from .schemas import service_ticket_schema, service_tickets_schema
+from App.extensions import limiter, cache
 
 service_ticket_bp = Blueprint('service_ticket_bp', __name__)
 
@@ -67,12 +68,14 @@ def remove_mechanic(ticket_id, mechanic_id):
 
 # Get All Service Tickets
 @service_ticket_bp.route('/', methods=['GET'])
+@cache.cached(timeout=60)  # Cache the response for 60 seconds
 def get_service_tickets():
     tickets = db.session.execute(select(ServiceTicket)).scalars().all()
     return service_tickets_schema.jsonify(tickets), 200
 
 # Delete service ticket
 @service_ticket_bp.route('/<int:ticket_id>', methods=['DELETE'])
+@limiter.limit("4 per month")  # Rate limit for this endpoint
 def delete_service_ticket(ticket_id):
     ticket = db.session.get(ServiceTicket, ticket_id)
     if not ticket:
