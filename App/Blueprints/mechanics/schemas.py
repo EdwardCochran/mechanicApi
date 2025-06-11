@@ -1,6 +1,10 @@
 from App.extensions import ma
 from App.models import Mechanic
+from marshmallow import Schema, fields
 
+class LoginSchema(Schema):
+    email = fields.Email(required=True)
+    password = fields.String(required=True)
 
 class MechanicSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -10,4 +14,4 @@ class MechanicSchema(ma.SQLAlchemyAutoSchema):
 
 mechanic_schema = MechanicSchema()
 mechanics_schema = MechanicSchema(many=True)
-login_schema= MechanicSchema(only=('email', 'password'))  # For login, only email and password are needed
+login_schema = LoginSchema()

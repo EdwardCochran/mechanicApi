@@ -1,16 +1,17 @@
 
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from App.extensions import db
+from flask_sqlalchemy import SQLAlchemy
 
 # Define the Base class
+
 class Base(DeclarativeBase):
     pass
 
 from datetime import date
 from typing import List
 
-
+db = SQLAlchemy(model_class=Base)
 
 
 # Association table

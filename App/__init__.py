@@ -1,9 +1,11 @@
 from flask import Flask
-from .extensions import ma, db, limiter
+from .extensions import ma, limiter
 from App.extensions import cache
 from .Blueprints.customers import customers_bp
 from .Blueprints.mechanics import mechanic_bp
 from .Blueprints.service_tickets.routes import service_ticket_bp
+from .models import db
+
 
 def create_app(config_name):
     app = Flask(__name__)

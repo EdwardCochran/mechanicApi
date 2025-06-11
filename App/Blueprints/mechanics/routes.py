@@ -36,25 +36,33 @@ def login_mechanic():
 
 
 # Create mechanic
-@mechanic_bp.route('', methods=['POST'])  
+@mechanic_bp.route('', methods=['POST'])
 def create_mechanic():
-    try:
-        mechanic_data = mechanic_schema.load(request.json)
-    except ValidationError as e:
-        return jsonify(e.messages), 400
+    mechanic_data = request.get_json()  # ✅ This makes mechanic_data a dictionary
 
-    existing_email = db.session.execute(
-        select(Mechanic).where(Mechanic.email == mechanic_data.email)
+    # Check for existing phone or email
+    existing = db.session.execute(
+        select(Mechanic).where(
+            (Mechanic.email == mechanic_data['email']) |
+            (Mechanic.phone == mechanic_data['phone'])
+        )
     ).scalars().first()
-    
-    if existing_email:
-        return jsonify({"error": "Mechanic with this email already exists"}), 400
 
-    new_mechanic = Mechanic(**request.json)
+    if existing:
+        return jsonify({"error": "Mechanic with this email or phone already exists"}), 400
+
+    # Create new mechanic
+    new_mechanic = Mechanic(
+        name=mechanic_data['name'],
+        email=mechanic_data['email'],
+        password=mechanic_data['password'],
+        phone=mechanic_data['phone'],
+        salary=mechanic_data['salary']
+    )
+
     db.session.add(new_mechanic)
     db.session.commit()
-
-    return mechanic_schema.jsonify(new_mechanic), 201
+    return jsonify({"message": "Mechanic created"}), 201
 
  # Get all mechanics
 @mechanic_bp.route('', methods=['GET'])
