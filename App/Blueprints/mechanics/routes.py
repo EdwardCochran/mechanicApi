@@ -5,8 +5,30 @@ from App.models import Customer, Mechanic, db
 from .schemas import mechanic_schema, mechanics_schema, login_schema
 from App. extensions import cache
 from App.utils.util import encode_token
+from functools import wraps
+from flask import request, jsonify
+from App.utils.util import decode_token  
 
-mechanic_bp = Blueprint('mechanics_bp', __name__)  # Blueprint instance is named mechanic_bp
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"error": "Token is missing or invalid"}), 401
+
+        token = auth_header.split(" ")[1]
+        try:
+            payload = decode_token(token)
+            customer_id = payload.get("sub")
+            if not customer_id:
+                raise ValueError("Invalid token")
+        except Exception:
+            return jsonify({"error": "Invalid or expired token"}), 401
+
+        return f(customer_id, *args, **kwargs)
+    return decorated
+
+mechanic_bp = Blueprint('mechanics_bp', __name__) 
 
 @mechanic_bp.route("/login", methods=['POST'])
 def login_mechanic():
