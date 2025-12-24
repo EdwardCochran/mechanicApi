@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
-from App.models import Customer, Mechanic, db
+from App.models import Customer, Mechanic, db, service_mechanic
 from .schemas import mechanic_schema, mechanics_schema, login_schema
-from App. extensions import cache
+from App.extensions import cache
 from App.utils.util import encode_token
 from functools import wraps
 from flask import request, jsonify
@@ -60,7 +60,10 @@ def login_mechanic():
 # Create mechanic
 @mechanic_bp.route('', methods=['POST'])
 def create_mechanic():
-    mechanic_data = request.get_json()  # ✅ This makes mechanic_data a dictionary
+    mechanic_data = request.get_json()  
+    phone = mechanic_data.get('phone', '')
+    if not (isinstance(phone, str) and phone.isdigit() and len(phone) == 10):
+        return jsonify({"error": "Phone must be exactly 10 digits"}), 400
 
     # Check for existing phone or email
     existing = db.session.execute(
@@ -95,7 +98,7 @@ def get_mechanics():
 
 # Get mechanic by ID
 @mechanic_bp.route('/<int:mechanic_id>', methods=['GET'])
-@cache.cached(timeout=60)  # Cache the response for 60 seconds
+@cache.cached(timeout=60)  # Cache to speed up request for the same mechanic
 def get_mechanic(mechanic_id):
     mechanic = db.session.get(Mechanic, mechanic_id)
     if not mechanic:
@@ -111,6 +114,10 @@ def update_mechanic(mechanic_id):
         return jsonify({"error": "Mechanic not found"}), 404
 
     mechanic_data = request.json 
+    if 'phone' in mechanic_data:
+        phone = mechanic_data.get('phone', '')
+        if not (isinstance(phone, str) and phone.isdigit() and len(phone) == 10):
+            return jsonify({"error": "Phone must be exactly 10 digits"}), 400
 
     for key, value in mechanic_data.items():
         if hasattr(mechanic, key):
@@ -131,3 +138,22 @@ def delete_mechanic(mechanic_id):
     db.session.commit()
     return jsonify({"message": f"Mechanic id: {mechanic_id} successfully deleted."}), 200
 
+
+@mechanic_bp.route('/top-by-tickets', methods=['GET'])
+def mechanics_by_ticket_count():
+    counts = (
+        db.session.query(
+            Mechanic,
+            db.func.count(service_mechanic.c.ticket_id).label("ticket_count"),
+        )
+        .outerjoin(service_mechanic, Mechanic.id == service_mechanic.c.mechanic_id)
+        .group_by(Mechanic.id)
+        .order_by(db.desc("ticket_count"))
+        .all()
+    )
+
+    mechanics = [
+        {**mechanic_schema.dump(mechanic), "ticket_count": ticket_count}
+        for mechanic, ticket_count in counts
+    ]
+    return jsonify(mechanics), 200

@@ -2,10 +2,10 @@ from flask import  request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 from App.models import Customer, db
-from .schemas import customer_schema, customers_schema
+from .schemas import customer_schema, customers_schema, login_schema
 from . import customers_bp
 from App.extensions import limiter, cache
-from App.utils.util import encode_token,token_required
+from App.utils.util import encode_token, token_required
 
 
 @customers_bp.route('/login', methods=['POST'])
@@ -36,7 +36,7 @@ def login():
     
 #Create Customer
 @customers_bp.route('', methods=['POST'])
-@limiter.limit("5 per day")  # Rate limit for this endpoint
+@limiter.limit("25 per day")  # Limit signups to reduce abuse/spam account creation
 def create_customer():
     try:
         customer_data = customer_schema.load(request.json)
@@ -65,11 +65,25 @@ def create_customer():
 
 # Get all customers
 @customers_bp.route('', methods=['GET'])
-@cache.cached(timeout=60)  # Cache the response for 60 seconds
+@cache.cached(timeout=60)  # Cache list to speed up repeated access
 def get_customers():
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    per_page = min(per_page, 50)  # cap page size to avoid overload
 
-    customers = db.session.execute(select(Customer)).scalars().all()
-    return customers_schema.jsonify(customers), 200
+    pagination = db.paginate(select(Customer), page=page, per_page=per_page, error_out=False)
+    return (
+        jsonify(
+            {
+                "items": customers_schema.dump(pagination.items),
+                "page": pagination.page,
+                "per_page": pagination.per_page,
+                "total": pagination.total,
+                "pages": pagination.pages,
+            }
+        ),
+        200,
+    )
 
 # Get customer by ID
 @customers_bp.route('/<int:customer_id>', methods=['GET'])
@@ -82,7 +96,7 @@ def get_customer(customer_id):
 # Update customer
 @customers_bp.route('/', methods=['PUT'])
 @token_required
-@limiter.limit("4 per month")  # Rate limit for this endpoint
+@limiter.limit("4 per month")  # Slow down profile edits to reduce accidental/abusive activity
 def update_customer(customer_id):
     query = select(Customer).where(Customer.id == customer_id)
     customer = db.session.execute(query).scalars().first()
@@ -105,7 +119,7 @@ def update_customer(customer_id):
 # Delete customer
 @customers_bp.route('/', methods=['DELETE'])
 @token_required
-@limiter.limit("3 per day")  # Rate limit for this endpoint
+@limiter.limit("3 per day")  # Protect against rapid account deletions or malicious abuse
 def delete_customer(customer_id): #Retreiving customer.id by token
     query = select(Customer).where(Customer.id == customer_id)
     customer = db.session.execute(query).scalars().first()

@@ -1,60 +1,47 @@
+from App.extensions import db
 
-
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from flask_sqlalchemy import SQLAlchemy
-
-# Define the Base class
-
-class Base(DeclarativeBase):
-    pass
-
-from datetime import date
-from typing import List
-
-db = SQLAlchemy(model_class=Base)
-
-
-# Association table
-from sqlalchemy import Table, Column, Integer, ForeignKey
-
-service_mechanics = Table(
-    'service_mechanics',
-    Base.metadata,
-    Column('ticket_id', Integer, ForeignKey('service_tickets.id')),
-    Column('mechanic_id', Integer, ForeignKey('mechanics.id'))
+service_mechanic = db.Table(
+    "service_mechanic",
+    db.Column("ticket_id", db.Integer, db.ForeignKey("service_ticket.id")),
+    db.Column("mechanic_id", db.Integer, db.ForeignKey("mechanic.id"))
 )
 
-class Customer(Base):
-    __tablename__ = 'customers'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    email: Mapped[str] = mapped_column(db.String(500), nullable=False, unique=True)
-    phone: Mapped[str] = mapped_column(db.String(15), nullable=False, unique=True)
+service_inventory = db.Table(
+    "service_inventory",
+    db.Column("ticket_id", db.Integer, db.ForeignKey("service_ticket.id")),
+    db.Column("inventory_id", db.Integer, db.ForeignKey("inventory.id"))
+)
 
-    service_ticket: Mapped['ServiceTicket'] = db.relationship(back_populates='customer')
+class Customer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    phone = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    tickets = db.relationship("ServiceTicket", backref="customer", lazy=True)
 
-class ServiceTicket(Base):
-    __tablename__ = 'service_tickets'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    vin: Mapped[str] = mapped_column(db.String(17), nullable=False,)
-    service_date: Mapped[date] = mapped_column(db.Date)
-    service_description: Mapped[str] = mapped_column(db.String(500), nullable=False)
-    customer_id: Mapped[int] = mapped_column(db.ForeignKey('customers.id'), nullable=False)
+    # implement set_password / check_password helpers if not present
 
-    customer: Mapped[Customer] = db.relationship(back_populates='service_ticket')
-    mechanics: Mapped[List['Mechanic']] = db.relationship(
-        secondary=service_mechanics, back_populates='service_tickets'
-    )
+class Mechanic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    phone = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    salary = db.Column(db.Float, nullable=True)
+    tickets = db.relationship("ServiceTicket", secondary=service_mechanic, back_populates="mechanics")
 
-class Mechanic(Base):
-    __tablename__ = 'mechanics'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
-    phone: Mapped[str] = mapped_column(db.String(15), nullable=False, unique=True)
-    salary: Mapped[float] = mapped_column(db.Float, nullable=False)
+class ServiceTicket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vin = db.Column(db.String(120), nullable=False)
+    service_description = db.Column(db.String(255), nullable=False)
+    service_date = db.Column(db.Date, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey("customer.id"))
+    mechanics = db.relationship("Mechanic", secondary=service_mechanic, back_populates="tickets")
+    parts = db.relationship("Inventory", secondary=service_inventory, back_populates="tickets")
 
-    service_tickets: Mapped[List[ServiceTicket]] = db.relationship(
-        secondary=service_mechanics, back_populates='mechanics'
-    )
+class Inventory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    tickets = db.relationship("ServiceTicket", secondary=service_inventory, back_populates="parts")

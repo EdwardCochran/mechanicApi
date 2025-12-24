@@ -1,12 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
 from sqlalchemy import select
 from marshmallow import ValidationError
-from App.models import db, ServiceTicket, Mechanic
+from App.models import db, ServiceTicket, Mechanic, Inventory
 from .schemas import service_ticket_schema, service_tickets_schema, edit_service_ticket_schema
 from App.extensions import limiter, cache
-from App.utils.util import encode_token, token_required, decode_token  
-from App.Blueprints.mechanics.schemas import mechanic_schema, mechanics_schema, login_schema
-from functools import wraps
+from App.utils.util import token_required
 from . import service_tickets_bp
 
 # Create a service ticket
@@ -72,9 +70,28 @@ def remove_mechanic(customer_id, ticket_id, mechanic_id):
     db.session.commit()
     return service_ticket_schema.jsonify(ticket), 200
 
-# Get All Service Tickets (open/public — no auth)
+
+@service_tickets_bp.route('/<int:ticket_id>/add-part/<int:part_id>', methods=['PUT'])
+@token_required
+def add_part(customer_id, ticket_id, part_id):
+    ticket = db.session.get(ServiceTicket, ticket_id)
+    part = db.session.get(Inventory, part_id)
+
+    if not ticket or not part:
+        return jsonify({"error": "Ticket or part not found"}), 404
+
+    if ticket.customer_id != customer_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    if part not in ticket.parts:
+        ticket.parts.append(part)
+        db.session.commit()
+
+    return service_ticket_schema.jsonify(ticket), 200
+
+# Get All Service Tickets 
 @service_tickets_bp.route('/', methods=['GET'])
-@cache.cached(timeout=60)
+@cache.cached(timeout=60)  # Cache for faster repeated access
 def get_service_tickets():
     tickets = db.session.execute(select(ServiceTicket)).scalars().all()
     return service_tickets_schema.jsonify(tickets), 200
@@ -89,7 +106,7 @@ def get_my_tickets(customer_id):
 # Delete service ticket
 @service_tickets_bp.route('/<int:ticket_id>', methods=['DELETE'])
 @token_required
-@limiter.limit("4 per month")
+@limiter.limit("4 per month")  # Throttle deletes to prevent bulk removal (accidental or malicious)
 def delete_service_ticket(customer_id, ticket_id):
     ticket = db.session.get(ServiceTicket, ticket_id)
     if not ticket:
@@ -145,128 +162,6 @@ def update_service_ticket(customer_id, ticket_id):
     return service_ticket_schema.jsonify(ticket), 200
 
 
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return jsonify({"error": "Token is missing or invalid"}), 401
-
-        token = auth_header.split(" ")[1]
-        try:
-            payload = decode_token(token)
-            customer_id = payload.get("sub")
-            if not customer_id:
-                raise ValueError("Invalid token")
-        except Exception:
-            return jsonify({"error": "Invalid or expired token"}), 401
-
-        return f(customer_id, *args, **kwargs)
-    return decorated
-
-mechanic_bp = Blueprint('mechanics_bp', __name__) 
-
-@mechanic_bp.route("/login", methods=['POST'])
-def login_mechanic():
-    try:
-        credentials = login_schema.load(request.json)
-        email = credentials['email']
-        password = credentials['password']
-    except ValidationError as e:
-        return jsonify(e.messages), 400
-
-    query = select(Mechanic).where(Mechanic.email == email, Mechanic.password == password)
-    mechanic = db.session.execute(query).scalars().first()
-
-    if mechanic:
-        token = encode_token(mechanic.id)
-        response = {
-            "status": "success",
-            "message": "Login successful",
-            "token": token,
-        }
-        return jsonify(response), 200
-    else:
-        return jsonify({"message": "Invalid email or password"}), 401
-
-
-
-
-
-# Create mechanic
-@mechanic_bp.route('', methods=['POST'])
-def create_mechanic():
-    mechanic_data = request.get_json()  # ✅ This makes mechanic_data a dictionary
-
-    # Check for existing phone or email
-    existing = db.session.execute(
-        select(Mechanic).where(
-            (Mechanic.email == mechanic_data['email']) |
-            (Mechanic.phone == mechanic_data['phone'])
-        )
-    ).scalars().first()
-
-    if existing:
-        return jsonify({"error": "Mechanic with this email or phone already exists"}), 400
-
-    # Create new mechanic
-    new_mechanic = Mechanic(
-        name=mechanic_data['name'],
-        email=mechanic_data['email'],
-        password=mechanic_data['password'],
-        phone=mechanic_data['phone'],
-        salary=mechanic_data['salary']
-    )
-
-    db.session.add(new_mechanic)
-    db.session.commit()
-    return jsonify({"message": "Mechanic created"}), 201
-
- # Get all mechanics
-@mechanic_bp.route('', methods=['GET'])
-def get_mechanics():
-    mechanics = db.session.execute(select(Mechanic)).scalars().all()
-    return mechanics_schema.jsonify(mechanics), 200
-
-
-# Get mechanic by ID
-@mechanic_bp.route('/<int:mechanic_id>', methods=['GET'])
-@cache.cached(timeout=60)  # Cache the response for 60 seconds
-def get_mechanic(mechanic_id):
-    mechanic = db.session.get(Mechanic, mechanic_id)
-    if not mechanic:
-        return jsonify({"error": "Mechanic not found"}), 404
-    return mechanic_schema.jsonify(mechanic), 200
-
-# Update mechanic
-
-@mechanic_bp.route('/<int:mechanic_id>', methods=['PUT'])
-def update_mechanic(mechanic_id):
-    mechanic = db.session.get(Mechanic, mechanic_id)
-    if not mechanic:
-        return jsonify({"error": "Mechanic not found"}), 404
-
-    mechanic_data = request.json 
-
-    for key, value in mechanic_data.items():
-        if hasattr(mechanic, key):
-            setattr(mechanic, key, value)
-
-    db.session.commit()
-    return mechanic_schema.jsonify(mechanic), 200
-
-# Delete mechanic
-@mechanic_bp.route('/<int:mechanic_id>', methods=['DELETE'])
-
-def delete_mechanic(mechanic_id):
-    mechanic = db.session.get(Mechanic, mechanic_id)
-    if not mechanic:
-        return jsonify({"error": "Mechanic not found"}), 404
-
-    db.session.delete(mechanic)
-    db.session.commit()
-    return jsonify({"message": f"Mechanic id: {mechanic_id} successfully deleted."}), 200
-
 @service_tickets_bp.route('/<int:ticket_id>/edit', methods=['PUT'])
 def edit_ticket_mechanics(ticket_id):
     ticket = db.session.get(ServiceTicket, ticket_id)
@@ -295,3 +190,11 @@ def edit_ticket_mechanics(ticket_id):
 
     db.session.commit()
     return service_ticket_schema.jsonify(ticket), 200
+
+
+
+
+
+
+
+

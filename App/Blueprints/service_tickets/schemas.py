@@ -6,6 +6,14 @@ class ServiceTicketSchema(ma.SQLAlchemyAutoSchema):
    class Meta:
         model = ServiceTicket
         include_fk = True
+   mechanics = fields.Method("get_mechanic_ids", dump_only=True)
+   parts = fields.Method("get_part_ids", dump_only=True)
+
+   def get_mechanic_ids(self, obj):
+       return [mechanic.id for mechanic in obj.mechanics]
+
+   def get_part_ids(self, obj):
+       return [part.id for part in obj.parts]
         
 from marshmallow import Schema, fields
 

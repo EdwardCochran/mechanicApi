@@ -1,10 +1,24 @@
 class DevelopmentConfig:
-    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:power317@localhost/mechanic_db'
+    SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://root:power317@localhost/mechanic_db"
     DEBUG = True
-    CACHE_Type = 'SimpleCache'
-    CACHE_Default_Timeout = 300
+
+    # Flask Cache Configuration
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 300
+
+    # Secret Key
+    SECRET_KEY = "CHANGE-ME"
+    JWT_ALGORITHM = "HS256"
+
+    # Rate limiting configuration
+    RATELIMIT_DEFAULT = "200 per day"
+
+
 class TestingConfig:
-    pass
-    
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    TESTING = True
+
+
 class ProductionConfig:
-    pass    
+    SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://user:password@localhost/mechanic_db"
+    DEBUG = False
