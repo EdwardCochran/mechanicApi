@@ -1,14 +1,578 @@
 swagger: '2.0'
 info:
   title: "Mechanic Shop API"
-  description: "This is an API"
+  description: "This is the API documentation for the Mechanic Shop application."
   version: "1.0.0"
 host: "127.0.0.1:5000"
-schemes:
+schemes: 
   - "http"
 consumes:
   - "application/json"
 produces:
   - "application/json"
-paths: 
-definitions: 
+paths:
+  /customers/login:
+    post:
+      tags:
+        - Customers
+      summary: "Customer login (generates token)"
+      description: "Validates customer credentials and returns a JWT auth token."
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Login credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/LoginCredentials"
+      responses:
+        200:
+          description: "Login successful"
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        400:
+          description: "Validation error"
+        401:
+          description: "Invalid credentials"
+  /customers:
+    post:
+      tags: [Customers]
+      summary: "Create customer"
+      description: "Create a new customer (rate limited )."
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/CustomerCreate"
+      responses:
+        201:
+          description: "Customer created"
+          schema:
+            $ref: "#/definitions/Customer"
+    get:
+      tags: [Customers]
+      summary: "List customers"
+      description: "Paginated list of customers (cached)."
+      parameters:
+        - in: "query"
+          name: "page"
+          type: "integer"
+          required: false
+        - in: "query"
+          name: "per_page"
+          type: "integer"
+          required: false
+      responses:
+        200:
+          description: "List of customers"
+          schema:
+            type: "object"
+            properties:
+              items:
+                type: "array"
+                items:
+                  $ref: "#/definitions/Customer"
+              page:
+                type: "integer"
+              per_page:
+                type: "integer"
+              total:
+                type: "integer"
+              pages:
+                type: "integer"
+  /customers/{customer_id}:
+    get:
+      tags: [Customers]
+      summary: "Get customer by ID"
+      parameters:
+        - in: "path"
+          name: "customer_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Customer"
+          schema:
+            $ref: "#/definitions/Customer"
+        404:
+          description: "Customer not found"
+  /customers/:
+    put:
+      tags: [Customers]
+      summary: "Update customer (auth required)"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/CustomerUpdate"
+      responses:
+        200:
+          description: "Updated customer"
+          schema:
+            $ref: "#/definitions/Customer"
+        401:
+          description: "Unauthorized"
+    delete:
+      tags: [Customers]
+      summary: "Delete customer (auth required)"
+      responses:
+        200:
+          description: "Delete confirmation"
+        401:
+          description: "Unauthorized"
+  /mechanics:
+    post:
+      tags: [Mechanics]
+      summary: "Create mechanic"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/MechanicCreate"
+      responses:
+        201:
+          description: "Mechanic created"
+          schema:
+            $ref: "#/definitions/Mechanic"
+    get:
+      tags: [Mechanics]
+      summary: "List mechanics"
+      responses:
+        200:
+          description: "Mechanics list"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Mechanic"
+  /mechanics/{mechanic_id}:
+    get:
+      tags: [Mechanics]
+      summary: "Get mechanic by ID"
+      parameters:
+        - in: "path"
+          name: "mechanic_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Mechanic"
+          schema:
+            $ref: "#/definitions/Mechanic"
+        404:
+          description: "Not found"
+    put:
+      tags: [Mechanics]
+      summary: "Update mechanic"
+      parameters:
+        - in: "path"
+          name: "mechanic_id"
+          type: "integer"
+          required: true
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/MechanicUpdate"
+      responses:
+        200:
+          description: "Updated mechanic"
+          schema:
+            $ref: "#/definitions/Mechanic"
+        404:
+          description: "Not found"
+    delete:
+      tags: [Mechanics]
+      summary: "Delete mechanic"
+      parameters:
+        - in: "path"
+          name: "mechanic_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Delete confirmation"
+        404:
+          description: "Not found"
+  /mechanics/top-by-tickets:
+    get:
+      tags: [Mechanics]
+      summary: "Mechanics ordered by ticket count"
+      responses:
+        200:
+          description: "Mechanics with ticket counts"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/MechanicWithCount"
+  /tickets/:
+    post:
+      tags: [Tickets]
+      summary: "Create service ticket"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/TicketCreate"
+      responses:
+        201:
+          description: "Ticket created"
+          schema:
+            $ref: "#/definitions/ServiceTicket"
+    get:
+      tags: [Tickets]
+      summary: "List service tickets"
+      responses:
+        200:
+          description: "Tickets list"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ServiceTicket"
+  /tickets/my-tickets:
+    get:
+      tags: [Tickets]
+      summary: "Get tickets for authenticated customer"
+      responses:
+        200:
+          description: "Customer tickets"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ServiceTicket"
+        401:
+          description: "Unauthorized"
+  /tickets/{ticket_id}:
+    put:
+      tags: [Tickets]
+      summary: "Update ticket"
+      parameters:
+        - in: "path"
+          name: "ticket_id"
+          type: "integer"
+          required: true
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/TicketUpdate"
+      responses:
+        200:
+          description: "Updated ticket"
+          schema:
+            $ref: "#/definitions/ServiceTicket"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+    delete:
+      tags: [Tickets]
+      summary: "Delete ticket"
+      parameters:
+        - in: "path"
+          name: "ticket_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Delete confirmation"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+  /tickets/{ticket_id}/assign-mechanic/{mechanic_id}:
+    put:
+      tags: [Tickets]
+      summary: "Assign mechanic to ticket"
+      parameters:
+        - in: "path"
+          name: "ticket_id"
+          type: "integer"
+          required: true
+        - in: "path"
+          name: "mechanic_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Ticket with mechanic IDs"
+          schema:
+            $ref: "#/definitions/ServiceTicket"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+  /tickets/{ticket_id}/remove-mechanic/{mechanic_id}:
+    put:
+      tags: [Tickets]
+      summary: "Remove mechanic from ticket"
+      parameters:
+        - in: "path"
+          name: "ticket_id"
+          type: "integer"
+          required: true
+        - in: "path"
+          name: "mechanic_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Ticket with mechanic IDs"
+          schema:
+            $ref: "#/definitions/ServiceTicket"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+  /tickets/{ticket_id}/add-part/{part_id}:
+    put:
+      tags: [Tickets]
+      summary: "Add part to ticket"
+      parameters:
+        - in: "path"
+          name: "ticket_id"
+          type: "integer"
+          required: true
+        - in: "path"
+          name: "part_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Ticket with part IDs"
+          schema:
+            $ref: "#/definitions/ServiceTicket"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+  /tickets/{ticket_id}/edit:
+    put:
+      tags: [Tickets]
+      summary: "Edit ticket mechanics list"
+      parameters:
+        - in: "path"
+          name: "ticket_id"
+          type: "integer"
+          required: true
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/TicketEditMechanics"
+      responses:
+        200:
+          description: "Updated ticket"
+          schema:
+            $ref: "#/definitions/ServiceTicket"
+        404:
+          description: "Not found"
+  /inventory:
+    post:
+      tags: [Inventory]
+      summary: "Create part"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/InventoryCreate"
+      responses:
+        201:
+          description: "Part created"
+          schema:
+            $ref: "#/definitions/Inventory"
+    get:
+      tags: [Inventory]
+      summary: "List parts"
+      responses:
+        200:
+          description: "Parts list"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Inventory"
+  /inventory/{part_id}:
+    get:
+      tags: [Inventory]
+      summary: "Get part by ID"
+      parameters:
+        - in: "path"
+          name: "part_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Part"
+          schema:
+            $ref: "#/definitions/Inventory"
+        404:
+          description: "Not found"
+    put:
+      tags: [Inventory]
+      summary: "Update part"
+      parameters:
+        - in: "path"
+          name: "part_id"
+          type: "integer"
+          required: true
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/InventoryUpdate"
+      responses:
+        200:
+          description: "Updated part"
+          schema:
+            $ref: "#/definitions/Inventory"
+        404:
+          description: "Not found"
+    delete:
+      tags: [Inventory]
+      summary: "Delete part"
+      parameters:
+        - in: "path"
+          name: "part_id"
+          type: "integer"
+          required: true
+      responses:
+        200:
+          description: "Delete confirmation"
+        404:
+          description: "Not found"
+definitions:
+  LoginCredentials:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+      password:
+        type: "string"
+    required:
+      - email
+      - password
+  LoginResponse:
+    type: "object"
+    properties:
+      auth_token:
+        type: "string"
+      message:
+        type: "string"
+      status:
+        type: "string"
+  Customer:
+    type: "object"
+    properties:
+      id: { type: "integer" }
+      name: { type: "string" }
+      email: { type: "string" }
+      phone: { type: "string" }
+  CustomerCreate:
+    type: "object"
+    required: [name, email, phone, password]
+    properties:
+      name: { type: "string" }
+      email: { type: "string" }
+      phone: { type: "string" }
+      password: { type: "string" }
+  CustomerUpdate:
+    type: "object"
+    properties:
+      name: { type: "string" }
+      email: { type: "string" }
+      phone: { type: "string" }
+      password: { type: "string" }
+  Mechanic:
+    type: "object"
+    properties:
+      id: { type: "integer" }
+      name: { type: "string" }
+      email: { type: "string" }
+      phone: { type: "string" }
+      salary: { type: "number", format: "float" }
+      ticket_count: { type: "integer" }
+  MechanicCreate:
+    type: "object"
+    required: [name, email, phone, password, salary]
+    properties:
+      name: { type: "string" }
+      email: { type: "string" }
+      phone: { type: "string" }
+      password: { type: "string" }
+      salary: { type: "number", format: "float" }
+  MechanicUpdate:
+    type: "object"
+    properties:
+      name: { type: "string" }
+      email: { type: "string" }
+      phone: { type: "string" }
+      password: { type: "string" }
+      salary: { type: "number", format: "float" }
+  MechanicWithCount:
+    allOf:
+      - $ref: "#/definitions/Mechanic"
+    properties:
+      ticket_count: { type: "integer" }
+  ServiceTicket:
+    type: "object"
+    properties:
+      id: { type: "integer" }
+      vin: { type: "string" }
+      service_description: { type: "string" }
+      service_date: { type: "string", format: "date" }
+      customer_id: { type: "integer" }
+      mechanics:
+        type: "array"
+        items: { type: "integer" }
+      parts:
+        type: "array"
+        items: { type: "integer" }
+  TicketCreate:
+    type: "object"
+    required: [vin, service_description, service_date, customer_id]
+    properties:
+      vin: { type: "string" }
+      service_description: { type: "string" }
+      service_date: { type: "string", format: "date" }
+      customer_id: { type: "integer" }
+  TicketUpdate:
+    type: "object"
+    properties:
+      vin: { type: "string" }
+      service_description: { type: "string" }
+      service_date: { type: "string", format: "date" }
+      add_mechanic:
+        type: "array"
+        items: { type: "integer" }
+      remove_mechanic:
+        type: "array"
+        items: { type: "integer" }
+  TicketEditMechanics:
+    type: "object"
+    properties:
+      add_ids:
+        type: "array"
+        items: { type: "integer" }
+      remove_ids:
+        type: "array"
+        items: { type: "integer" }
+  Inventory:
+    type: "object"
+    properties:
+      id: { type: "integer" }
+      name: { type: "string" }
+      price: { type: "number", format: "float" }
+  InventoryCreate:
+    type: "object"
+    required: [name, price]
+    properties:
+      name: { type: "string" }
+      price: { type: "number", format: "float" }
+  InventoryUpdate:
+    type: "object"
+    properties:
+      name: { type: "string" }
+      price: { type: "number", format: "float" }
