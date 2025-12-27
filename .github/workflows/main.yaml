@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/App
 
     steps:
       - name: Checkout code
@@ -30,6 +32,4 @@ jobs:
           python -c "import sys; print('Site-packages:', next(p for p in sys.path if 'site-packages' in p))"
 
       - name: Run tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}
         run: python -m unittest discover -s tests -p "test_*.py"
