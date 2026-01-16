@@ -14,6 +14,7 @@ Flask-SQLAlchemy==3.1.1
 flask-swagger==0.2.14
 flask-swagger-ui==5.21.0
 greenlet==3.2.2
+gunicorn==20.1.0
 importlib_metadata==8.7.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
