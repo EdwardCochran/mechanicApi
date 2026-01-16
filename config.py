@@ -23,6 +23,11 @@ class TestingConfig:
 
 
 class ProductionConfig:
-    SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")
+    db_url = os.environ.get("SQLALCHEMY_DATABASE_URI") or os.environ.get("DATABASE_URL")
+    if db_url:
+        SQLALCHEMY_DATABASE_URI = (
+            db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+                  .replace("postgresql://", "postgresql+psycopg2://", 1)
+        )
     DEBUG = False
     CACHE_TYPE = "SimpleCache"
