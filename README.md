@@ -6,7 +6,7 @@ Flask REST API for a mechanic shop with customers, mechanics, service tickets, a
 - Python 3.9+
 - Install deps: `pip install -r requirements.txt`
 - Configure `config.py` (DB URI, secret key, rate limits, cache)
-- Run: `python server.py` (defaults to port 5000)
+- Run: `python flask_app.py` (defaults to port 5000)
 
 ## Auth
 - Customer login: `POST /customers/login` → returns `auth_token`

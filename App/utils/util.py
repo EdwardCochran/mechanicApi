@@ -1,10 +1,11 @@
+import os
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 import jwt
 from flask import request, jsonify
 
-SECRET_KEY = "supersecretkey"
+SECRET_KEY = os.environ.get("SECRET_KEY") or "super secret secrets"
 ALGORITHM = "HS256"
 
 

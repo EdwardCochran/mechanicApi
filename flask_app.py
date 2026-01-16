@@ -1,7 +1,15 @@
-from App import create_app 
+from App import create_app
 from App.models import db
 
-app = create_app('DevelopmentConfig')
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+if load_dotenv:
+    load_dotenv()
+
+app = create_app("ProductionConfig")
 
 with app.app_context():
    #db.drop_all()
@@ -14,5 +22,4 @@ with app.app_context():
             print(f"{rule.rule} -> {rule.endpoint}")
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    app.run(debug=app.config.get("DEBUG", False))
