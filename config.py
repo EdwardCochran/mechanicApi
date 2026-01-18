@@ -24,19 +24,14 @@ class TestingConfig:
 
 
 class ProductionConfig:
-    db_url = os.environ.get("DATABASE_URL") or os.environ.get("SQLALCHEMY_DATABASE_URI")
-
-    if not db_url:
-        raise RuntimeError("DATABASE_URL (or SQLALCHEMY_DATABASE_URI) is not set")
-
+    db_url = os.environ.get("DATABASE_URL") or os.environ.get("SQLALCHEMY_DATABASE_URI") or ""
     SQLALCHEMY_DATABASE_URI = (
         db_url.replace("postgres://", "postgresql+psycopg://", 1)
               .replace("postgresql://", "postgresql+psycopg://", 1)
+        if db_url
+        else None
     )
 
     DEBUG = False
     CACHE_TYPE = "SimpleCache"
     SECRET_KEY = os.environ.get("SECRET_KEY")
-
-    if not SECRET_KEY:
-        raise RuntimeError("SECRET_KEY is not set")

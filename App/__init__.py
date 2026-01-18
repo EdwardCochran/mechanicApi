@@ -6,6 +6,11 @@ from .extensions import db, ma, migrate, cache, limiter
 def create_app(config_name="DevelopmentConfig"):
     app = Flask(__name__)
     app.config.from_object(f"config.{config_name}")
+    if config_name == "ProductionConfig":
+        if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+            raise RuntimeError("DATABASE_URL (or SQLALCHEMY_DATABASE_URI) is not set")
+        if not app.config.get("SECRET_KEY"):
+            raise RuntimeError("SECRET_KEY is not set")
 
     db.init_app(app)
     ma.init_app(app)
