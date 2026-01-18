@@ -3,9 +3,9 @@ info:
   title: "Mechanic Shop API"
   description: "This is the API documentation for the Mechanic Shop application."
   version: "1.0.0"
-host: "127.0.0.1:5000"
-schemes: 
-  - "http"
+host: "mechanicapi.onrender.com"
+schemes:
+  - "https"
 consumes:
   - "application/json"
 produces:
