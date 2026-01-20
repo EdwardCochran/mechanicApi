@@ -17,6 +17,8 @@ def create_app(config_name="DevelopmentConfig"):
     migrate.init_app(app, db)
     cache.init_app(app)
     limiter.init_app(app)
+    with app.app_context():
+        db.create_all()
 
     # Swagger UI setup
     SWAGGER_URL = "/api/docs"
